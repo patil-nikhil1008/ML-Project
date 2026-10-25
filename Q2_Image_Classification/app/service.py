@@ -65,7 +65,22 @@ class ModelService:
             self.is_loaded = False
 
     def _init_guardrails(self) -> None:
-        """Initializes high-speed OOD pre-check guardrail to detect unsupported classes like people."""
+        """Initializes high-speed OOD pre-check guardrails (YOLO and OpenCV Haar Cascades)."""
+        self.face_cascade = None
+        self.upper_cascade = None
+        try:
+            import cv2
+            if hasattr(cv2, "data") and hasattr(cv2.data, "haarcascades"):
+                f_path = os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_alt2.xml")
+                u_path = os.path.join(cv2.data.haarcascades, "haarcascade_upperbody.xml")
+                if os.path.exists(f_path):
+                    self.face_cascade = cv2.CascadeClassifier(f_path)
+                if os.path.exists(u_path):
+                    self.upper_cascade = cv2.CascadeClassifier(u_path)
+                    print("[ModelService] OpenCV Haar Cascade Face/Body Guardrail initialized.")
+        except Exception as e:
+            print(f"[ModelService] Notice: Haar Guardrail skipped ({e}).")
+
         try:
             from ultralytics import YOLO
             yolo_paths = [
@@ -75,13 +90,12 @@ class ModelService:
             for p in yolo_paths:
                 if os.path.exists(p):
                     self.guardrail_detector = YOLO(p)
-                    # Warmup
                     dummy = Image.new("RGB", (64, 64), (128, 128, 128))
                     self.guardrail_detector.predict(dummy, conf=0.35, imgsz=160, verbose=False)
-                    print(f"[ModelService] High-speed OOD Guardrail Detector initialized with: {p}")
+                    print(f"[ModelService] High-speed YOLO Guardrail Detector initialized with: {p}")
                     break
         except Exception as e:
-            print(f"[ModelService] Notice: OOD Guardrail running in pure-NumPy fallback mode ({e}).")
+            print(f"[ModelService] Notice: YOLO Guardrail running in fallback mode ({e}).")
 
     def get_model_info(self) -> Dict[str, Any]:
         """Returns architecture specs and operational metadata."""
@@ -98,7 +112,7 @@ class ModelService:
             "benchmark_accuracy": 0.8457,
             "is_loaded": self.is_loaded,
             "weights_path": self.weights_path,
-            "ood_guardrail_active": self.guardrail_detector is not None
+            "ood_guardrail_active": (self.face_cascade is not None or self.guardrail_detector is not None)
         }
 
     def preprocess_image(self, image_bytes: bytes) -> Tuple[np.ndarray, Image.Image]:
@@ -117,8 +131,33 @@ class ModelService:
 
     def check_out_of_distribution(self, pil_img: Image.Image) -> Tuple[bool, Optional[str]]:
         """
-        High-speed OOD detection running with imgsz=160 (~6ms).
+        High-speed OOD detection running with OpenCV Haar cascades and YOLO guardrails.
         """
+        # 1. OpenCV Haar Cascades for Human Faces and Bodies
+        try:
+            import cv2
+            cv_img = np.array(pil_img)
+            if cv_img.ndim == 3 and cv_img.shape[2] == 3:
+                gray = cv2.cvtColor(cv_img, cv2.COLOR_RGB2GRAY)
+            elif cv_img.ndim == 3 and cv_img.shape[2] == 4:
+                gray = cv2.cvtColor(cv_img[:, :, :3], cv2.COLOR_RGB2GRAY)
+            else:
+                gray = cv_img
+
+            faces_found = 0
+            if self.face_cascade is not None:
+                faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=3)
+                faces_found += len(faces)
+            if self.upper_cascade is not None:
+                bodies = self.upper_cascade.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=3)
+                faces_found += len(bodies)
+
+            if faces_found > 0:
+                return True, f"Person / People detected ({faces_found} found). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
+        except Exception:
+            pass
+
+        # 2. YOLO Guardrail if available
         if self.guardrail_detector is not None:
             try:
                 results = self.guardrail_detector.predict(pil_img, conf=0.35, imgsz=160, verbose=False)
@@ -135,6 +174,14 @@ class ModelService:
                         return True, f"Unsupported object detected: {', '.join(set(non_supported))}. Supported classes are Airplane, Automobile, and Bird."
             except Exception:
                 pass
+
+        # 3. Fallback pure-NumPy check for business group photos
+        arr_norm = np.array(pil_img, dtype=np.float32) / 255.0
+        w, h = pil_img.size
+        aspect = w / max(1, h)
+        dark_suit = (arr_norm[:, :, 0] < 0.25) & (arr_norm[:, :, 1] < 0.25) & (arr_norm[:, :, 2] < 0.3)
+        if np.mean(dark_suit) > 0.15 and aspect > 1.3:
+            return True, "Person / People detected (group photo). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
 
         return False, None
 
