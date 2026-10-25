@@ -86,8 +86,17 @@ async def predict_image(file: UploadFile = File(...)):
         contents = await file.read()
         if len(contents) == 0:
             raise HTTPException(status_code=400, detail="Empty image file received.")
+        
+        # Save last upload to debug
+        try:
+            with open(os.path.join(APP_DIR, "last_user_upload.png"), "wb") as f_out:
+                f_out.write(contents)
+        except Exception:
+            pass
+
         result = model_service.predict(contents)
         result["filename"] = file.filename
+        print(f"[API INFERENCE RESULT] file={file.filename} is_ood={result.get('is_out_of_distribution')} class={result.get('predicted_class')} conf={result.get('confidence_percentage')} warning={result.get('warning_message')}")
         return result
     except HTTPException:
         raise

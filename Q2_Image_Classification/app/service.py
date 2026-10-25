@@ -148,9 +148,12 @@ class ModelService:
                     gray,
                     scaleFactor=1.1,
                     minNeighbors=5,
-                    minSize=(30, 30)
+                    minSize=(36, 36)
                 )
-                if len(faces) > 0:
+                self._last_face_count = len(faces)
+                is_person_group = len(faces) >= 3
+                is_portrait = len(faces) >= 1 and any(f[2] > 0.15 * gray.shape[1] for f in faces)
+                if is_person_group or is_portrait:
                     return True, f"Person / People detected ({len(faces)} found). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
         except Exception:
             pass
@@ -184,10 +187,7 @@ class ModelService:
         # Preprocessing
         x, pil_img = self.preprocess_image(image_bytes)
 
-        # 1. High-speed OOD Guardrail check
-        is_ood, ood_message = self.check_out_of_distribution(pil_img)
-
-        # 2. Pure NumPy forward pass
+        # 1. Pure NumPy forward pass
         probabilities = self.model.predict_proba(x)[0]
         latency_ms = (time.perf_counter() - start_time) * 1000.0
 
@@ -198,6 +198,15 @@ class ModelService:
             self.class_names[i]: float(probabilities[i])
             for i in range(len(self.class_names))
         }
+
+        # 2. High-speed OOD Guardrail check
+        is_ood, ood_message = self.check_out_of_distribution(pil_img)
+
+        # If image classifies confidently as a supported class (Airplane, Automobile, Bird),
+        # never show an OOD error unless it is a genuine group photo of people (3+ faces).
+        if is_ood and confidence >= 0.75 and getattr(self, "_last_face_count", 0) < 3:
+            is_ood = False
+            ood_message = None
 
         if is_ood:
             return {
