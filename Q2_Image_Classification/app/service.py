@@ -67,17 +67,14 @@ class ModelService:
     def _init_guardrails(self) -> None:
         """Initializes high-speed OOD pre-check guardrails (YOLO and OpenCV Haar Cascades)."""
         self.face_cascade = None
-        self.upper_cascade = None
+        self.guardrail_detector = None
         try:
             import cv2
             if hasattr(cv2, "data") and hasattr(cv2.data, "haarcascades"):
                 f_path = os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_alt2.xml")
-                u_path = os.path.join(cv2.data.haarcascades, "haarcascade_upperbody.xml")
                 if os.path.exists(f_path):
                     self.face_cascade = cv2.CascadeClassifier(f_path)
-                if os.path.exists(u_path):
-                    self.upper_cascade = cv2.CascadeClassifier(u_path)
-                    print("[ModelService] OpenCV Haar Cascade Face/Body Guardrail initialized.")
+                    print("[ModelService] OpenCV Haar Cascade Face Guardrail initialized.")
         except Exception as e:
             print(f"[ModelService] Notice: Haar Guardrail skipped ({e}).")
 
@@ -131,9 +128,11 @@ class ModelService:
 
     def check_out_of_distribution(self, pil_img: Image.Image) -> Tuple[bool, Optional[str]]:
         """
-        High-speed OOD detection running with OpenCV Haar cascades and YOLO guardrails.
+        High-speed OOD detection running with OpenCV Haar face cascade and YOLO guardrails.
+        Ensures target classes (Airplane, Automobile, Bird) pass cleanly while human portraits,
+        group photos, and unsupported subjects trigger the OOD alert.
         """
-        # 1. OpenCV Haar Cascades for Human Faces and Bodies
+        # 1. OpenCV Haar Face Cascade for Human Portraits and Group Photos
         try:
             import cv2
             cv_img = np.array(pil_img)
@@ -144,16 +143,15 @@ class ModelService:
             else:
                 gray = cv_img
 
-            faces_found = 0
             if self.face_cascade is not None:
-                faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=3)
-                faces_found += len(faces)
-            if self.upper_cascade is not None:
-                bodies = self.upper_cascade.detectMultiScale(gray, scaleFactor=1.08, minNeighbors=3)
-                faces_found += len(bodies)
-
-            if faces_found > 0:
-                return True, f"Person / People detected ({faces_found} found). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
+                faces = self.face_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.1,
+                    minNeighbors=5,
+                    minSize=(30, 30)
+                )
+                if len(faces) > 0:
+                    return True, f"Person / People detected ({len(faces)} found). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
         except Exception:
             pass
 
@@ -174,14 +172,6 @@ class ModelService:
                         return True, f"Unsupported object detected: {', '.join(set(non_supported))}. Supported classes are Airplane, Automobile, and Bird."
             except Exception:
                 pass
-
-        # 3. Fallback pure-NumPy check for business group photos
-        arr_norm = np.array(pil_img, dtype=np.float32) / 255.0
-        w, h = pil_img.size
-        aspect = w / max(1, h)
-        dark_suit = (arr_norm[:, :, 0] < 0.25) & (arr_norm[:, :, 1] < 0.25) & (arr_norm[:, :, 2] < 0.3)
-        if np.mean(dark_suit) > 0.15 and aspect > 1.3:
-            return True, "Person / People detected (group photo). This model is trained specifically on CIFAR-10 classes: Airplane, Automobile, and Bird."
 
         return False, None
 

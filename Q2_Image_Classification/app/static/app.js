@@ -181,6 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
     latencyValue.textContent = `${data.latency_ms} ms`;
 
     // Check Out-of-Distribution Warning
+    const classRows = ['airplane', 'automobile', 'bird'];
+    classRows.forEach(cls => {
+      const row = document.getElementById(`row-${cls}`);
+      if (row) row.classList.remove('row-active-class');
+    });
+
     if (data.is_out_of_distribution) {
       oodWarningBanner.style.display = 'flex';
       oodWarningTitle.textContent = '⚠️ Unsupported Subject Detected';
@@ -193,6 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
       predictionBanner.classList.remove('is-ood');
       predictedClass.textContent = data.predicted_class;
       confidenceValue.textContent = data.confidence_percentage;
+
+      // Highlight corresponding row in benchmark metrics table
+      const activeRow = document.getElementById(`row-${data.predicted_class.toLowerCase()}`);
+      if (activeRow) activeRow.classList.add('row-active-class');
     }
 
     // Probability Bars

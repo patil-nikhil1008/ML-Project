@@ -511,6 +511,11 @@ h1 {
   font-weight: 600;
 }
 
+.row-active-class {
+  background: rgba(16, 185, 129, 0.16) !important;
+  box-shadow: inset 3px 0 0 #10b981;
+}
+
 .badge-tag {
   font-size: 0.7rem;
   font-weight: 700;
