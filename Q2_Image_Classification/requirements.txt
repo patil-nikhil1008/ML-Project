@@ -1,0 +1,13 @@
+# Core ML & Math (Pure NumPy)
+numpy>=1.22.0
+matplotlib>=3.5.0
+pillow>=9.0.0
+
+# Production API & Server
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+python-multipart>=0.0.6
+
+# Testing Suite (Unit, Integration, Regression, UAT)
+pytest>=7.0.0
+requests>=2.28.0

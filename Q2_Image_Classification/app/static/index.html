@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CIFAR-10 Pure NumPy Classifier | Production AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo">🧠</div>
+        <div>
+          <h1>CIFAR-10 Pure NumPy Classifier</h1>
+          <p class="subtitle">Deep Neural Network built 100% from scratch with pure NumPy & vector math</p>
+        </div>
+      </div>
+      <div class="badges">
+        <span class="badge badge-success"><span class="dot"></span> Model: Active</span>
+        <span class="badge badge-info">Zero Frameworks (Pure NumPy)</span>
+        <span class="badge badge-accent">Accuracy: 84.57%</span>
+        <a href="/docs" target="_blank" class="badge badge-link">REST API Docs ↗</a>
+      </div>
+    </header>
+
+    <!-- Supported Scope Notification Banner -->
+    <div class="scope-notice">
+      <span class="scope-icon">🎯</span>
+      <div>
+        <strong>Model Classification Scope:</strong> This neural network is trained specifically on 3 target CIFAR-10 categories: 
+        <span class="scope-tag">✈️ Airplane</span>
+        <span class="scope-tag">🚗 Automobile</span>
+        <span class="scope-tag">🐦 Bird</span>.
+        <em>(Uploading unsupported subjects like people, pets, or furniture will trigger the OOD Guardrail alert.)</em>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <main class="grid-container">
+      <!-- Left Column: Image Input & Samples -->
+      <section class="card input-card">
+        <h2 class="card-title">1. Provide Input Image</h2>
+        <p class="card-desc">Upload any photo or test with authentic CIFAR-10 benchmark test samples below.</p>
+
+        <!-- Drag & Drop Zone -->
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp" hidden>
+          <div class="dropzone-content" id="dropzoneContent">
+            <div class="upload-icon">📁</div>
+            <p class="dropzone-text"><strong>Click to upload</strong> or drag & drop</p>
+            <p class="dropzone-hint">PNG, JPG, or WebP (Auto-resized to 32×32)</p>
+          </div>
+          <div class="preview-container" id="previewContainer" style="display: none;">
+            <img id="imagePreview" alt="Input Preview" class="image-preview">
+            <button id="clearBtn" class="btn-clear" title="Remove image">×</button>
+          </div>
+        </div>
+
+        <!-- Sample Selector -->
+        <div class="sample-section">
+          <span class="section-label">Quick Test with Real CIFAR-10 Samples:</span>
+          <div class="sample-buttons">
+            <button class="sample-btn" data-class="Airplane">
+              <span class="sample-emoji">✈️</span> Airplane
+            </button>
+            <button class="sample-btn" data-class="Automobile">
+              <span class="sample-emoji">🚗</span> Automobile
+            </button>
+            <button class="sample-btn" data-class="Bird">
+              <span class="sample-emoji">🐦</span> Bird
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button id="classifyBtn" class="btn btn-primary" disabled>
+          <span id="btnText">Classify Image</span>
+          <span id="btnSpinner" class="spinner" style="display: none;"></span>
+        </button>
+      </section>
+
+      <!-- Right Column: Inference Results & Confidence -->
+      <section class="card output-card">
+        <h2 class="card-title">2. Inference & Probabilities</h2>
+        <p class="card-desc">Real-time forward propagation output with softmax probabilities and execution latency.</p>
+
+        <div id="resultsPlaceholder" class="placeholder-state">
+          <div class="placeholder-icon">⚡</div>
+          <p>Select or upload an image to run pure-NumPy inference</p>
+        </div>
+
+        <div id="resultsContent" class="results-content" style="display: none;">
+          <!-- OOD Warning Alert Banner -->
+          <div id="oodWarningBanner" class="ood-alert" style="display: none;">
+            <div class="ood-alert-icon">⚠️</div>
+            <div class="ood-alert-body">
+              <h4 id="oodWarningTitle">Unsupported Class Detected</h4>
+              <p id="oodWarningText">The uploaded image contains an unsupported subject.</p>
+            </div>
+          </div>
+
+          <!-- Top Classification Card -->
+          <div class="prediction-banner" id="predictionBanner">
+            <div>
+              <span class="prediction-label">PREDICTED CLASS</span>
+              <h3 id="predictedClass" class="prediction-value">-</h3>
+            </div>
+            <div class="confidence-box">
+              <span class="confidence-label">CONFIDENCE</span>
+              <span id="confidenceValue" class="confidence-value">0.00%</span>
+            </div>
+          </div>
+
+          <!-- Latency & Specs -->
+          <div class="metrics-row">
+            <div class="metric-chip">
+              <span class="chip-label">Inference Latency:</span>
+              <strong id="latencyValue">0 ms</strong>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-label">Input Vector:</span>
+              <strong>3,072 dims</strong>
+            </div>
+            <div class="metric-chip">
+              <span class="chip-label">Activation:</span>
+              <strong>Softmax</strong>
+            </div>
+          </div>
+
+          <!-- Probability Distribution Bars -->
+          <div class="distribution-section">
+            <h4>Class Probability Distribution:</h4>
+            
+            <div class="prob-item">
+              <div class="prob-header">
+                <span>✈️ Airplane (Class 0)</span>
+                <span id="probAirplane" class="prob-pct">0.0%</span>
+              </div>
+              <div class="progress-track">
+                <div id="barAirplane" class="progress-bar bar-airplane" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="prob-item">
+              <div class="prob-header">
+                <span>🚗 Automobile (Class 1)</span>
+                <span id="probAutomobile" class="prob-pct">0.0%</span>
+              </div>
+              <div class="progress-track">
+                <div id="barAutomobile" class="progress-bar bar-auto" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="prob-item">
+              <div class="prob-header">
+                <span>🐦 Bird (Class 2)</span>
+                <span id="probBird" class="prob-pct">0.0%</span>
+              </div>
+              <div class="progress-track">
+                <div id="barBird" class="progress-bar bar-bird" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Section: Official Benchmark & Performance Analysis -->
+    <section class="card benchmark-card">
+      <div class="card-header-flex">
+        <div>
+          <h2 class="card-title">3. Official CIFAR-10 Benchmark Metrics</h2>
+          <p class="card-desc">Verified evaluation on held-out CIFAR-10 test dataset (3,000 images, 1,000 per class).</p>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="report">Metrics Table</button>
+          <button class="tab-btn" data-tab="curves">Loss & Accuracy Curves</button>
+          <button class="tab-btn" data-tab="confusion">Confusion Matrix</button>
+          <button class="tab-btn" data-tab="analysis">200-Word Analysis</button>
+        </div>
+      </div>
+
+      <!-- Tab Content: Report -->
+      <div id="tab-report" class="tab-content active">
+        <div class="table-responsive">
+          <table class="metrics-table">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>Test Support</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>✈️ Airplane (0)</strong></td>
+                <td>0.7816</td>
+                <td>0.8730</td>
+                <td>0.8248</td>
+                <td>1,000</td>
+                <td><span class="badge-tag tag-pass">PASS</span></td>
+              </tr>
+              <tr>
+                <td><strong>🚗 Automobile (1)</strong></td>
+                <td>0.8947</td>
+                <td>0.8750</td>
+                <td>0.8847</td>
+                <td>1,000</td>
+                <td><span class="badge-tag tag-perfect">PASS</span></td>
+              </tr>
+              <tr>
+                <td><strong>🐦 Bird (2)</strong></td>
+                <td>0.8718</td>
+                <td>0.7890</td>
+                <td>0.8283</td>
+                <td>1,000</td>
+                <td><span class="badge-tag tag-pass">PASS</span></td>
+              </tr>
+              <tr class="highlight-row">
+                <td><strong>Macro Average</strong></td>
+                <td><strong>0.8494</strong></td>
+                <td><strong>0.8457</strong></td>
+                <td><strong>0.8459</strong></td>
+                <td><strong>3,000</strong></td>
+                <td><span class="badge-tag tag-success">84.57% Acc</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Curves -->
+      <div id="tab-curves" class="tab-content">
+        <div class="plots-grid">
+          <div class="plot-box">
+            <h4>Training & Validation Loss Trajectory (50 Epochs)</h4>
+            <img src="/static/loss_curves.png" alt="Loss Curves" class="plot-img">
+          </div>
+          <div class="plot-box">
+            <h4>Training & Validation Accuracy Progression (Target: ≥60%)</h4>
+            <img src="/static/accuracy_curves.png" alt="Accuracy Curves" class="plot-img">
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Content: Confusion Matrix -->
+      <div id="tab-confusion" class="tab-content">
+        <div class="single-plot-box">
+          <h4>Annotated Test Set Confusion Matrix (3x3 Heatmap)</h4>
+          <img src="/static/confusion_matrix.png" alt="Confusion Matrix" class="plot-img plot-centered">
+        </div>
+      </div>
+
+      <!-- Tab Content: Analysis -->
+      <div id="tab-analysis" class="tab-content">
+        <div class="analysis-box">
+          <h3>Technical Performance Analysis</h3>
+          <p>
+            <strong>Model Architecture Choices:</strong> A multi-layer feedforward network with dimensional tapering [3072 → 512 → 256 → 128 → 3] was selected to compress high-dimensional raw pixel features into hierarchically abstract representations. He normal initialization provides variance preservation across ReLU layers, preventing vanishing gradients. Batch Normalization before each non-linearity eliminates internal covariate shift and accelerates optimization, while Dropout (rate=0.3) combined with L2 weight decay (1e-4) penalizes co-adaptation of neurons on dense pixel inputs.
+          </p>
+          <p>
+            <strong>Training Behavior & Convergence:</strong> Mini-batch Adam optimization (batch size 128) paired with a Cosine Annealing learning rate schedule ensures fast initial loss reduction followed by fine-grained convergence. Batch normalization stabilizes gradients throughout all 50 epochs, eliminating exploding gradient issues. Validation accuracy closely mirrors training accuracy without severe overfitting, demonstrating that inverted dropout and weight decay successfully regularize the 1.7M parameters.
+          </p>
+          <p>
+            <strong>Per-Class Performance Differences:</strong> Automobiles (Class 1) consistently achieve the highest precision and recall (>85%) owing to distinct rectangular silhouettes, high-contrast dark tires, and consistent ground-plane placement. In contrast, Airplanes (Class 0) and Birds (Class 2) exhibit mutual confusion; both share open sky backgrounds with high blue/cyan channel values and elongated aerodynamic profiles, making linear separation on raw pixel coordinates challenging without spatial convolutions.
+          </p>
+          <p>
+            <strong>Potential Improvements:</strong> Transitioning to Convolutional Neural Networks (CNNs) with 2D spatial weight sharing, incorporating data augmentations (random horizontal flips, crops, and color jittering), and employing residual skip connections would markedly elevate spatial feature extraction and push classification accuracy beyond 85-90%.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Production Deployment Suite: Question 2 — CIFAR-10 From Scratch (Pure NumPy) &bull; Built with FastAPI & Vanilla JavaScript</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

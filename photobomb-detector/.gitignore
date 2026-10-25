@@ -1,0 +1,49 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+.env
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Model Weights (Auto-downloaded by Ultralytics if missing)
+*.pt
+*.pth
+*.onnx
+
+# Scratch & debug artifacts in root
+*.mp4
+video_canvas/
+video_frames/
+video_frames_detailed/
+video_orig/
+user_test_images/
+uploaded_screenshot.png
+cropped_user_photo.jpg
+office_loft_erased.jpg
+output_*.jpg
+test_*.jpg
+test_*.png
+pb02_*.jpg
+pb02_*.png
+pb_02_cleaned_actual.jpg
+
+# Transient outputs in output/ (keep report & assets)
+output/*.jpg
+output/*.png
+output/*.json
+!output/.gitkeep
+!output/report_assets/
+!output/report_assets/*.png
+!output/Photobomb_Studio_BA_QA_Compliance_Report.pdf
+
+# OS & Editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

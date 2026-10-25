@@ -1,0 +1,207 @@
+/* 
+ * Photobomb Studio — Premium Design System 
+ * Inspired by Apple Pro Display & Linear Design Principles
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #09090b;
+  --bg-secondary: #0f1117;
+  --bg-card: rgba(18, 20, 29, 0.7);
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-highlight: rgba(255, 255, 255, 0.14);
+  --accent-glow: rgba(99, 102, 241, 0.15);
+  --keep-emerald: #10b981;
+  --remove-rose: #f43f5e;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Background Aurora Gradient */
+body {
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 15% 10%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 15%, rgba(14, 165, 233, 0.06) 0px, transparent 50%),
+    radial-gradient(at 50% 85%, rgba(99, 102, 241, 0.05) 0px, transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: rgba(15, 17, 26, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 
+    0 1px 1px 0 rgba(0, 0, 0, 0.2),
+    0 8px 32px 0 rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel:hover {
+  border-color: var(--border-highlight);
+}
+
+/* Custom Interactive Range Sliders */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+  border: 2px solid #6366f1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.8), 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Person Cards with Ambient Edge Glow */
+.person-card-keep {
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, rgba(15, 17, 26, 0.7) 100%);
+}
+
+.person-card-keep:hover {
+  border-color: rgba(16, 185, 129, 0.6);
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(16, 185, 129, 0.2);
+  transform: translateY(-2px);
+}
+
+.person-card-remove {
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.04) 0%, rgba(15, 17, 26, 0.7) 100%);
+}
+
+.person-card-remove:hover {
+  border-color: rgba(244, 63, 94, 0.6);
+  box-shadow: 0 10px 25px -5px rgba(244, 63, 94, 0.15), inset 0 1px 0 rgba(244, 63, 94, 0.2);
+  transform: translateY(-2px);
+}
+
+.person-card-highlighted {
+  border-color: #818cf8 !important;
+  box-shadow: 0 0 25px rgba(99, 102, 241, 0.35), inset 0 0 0 1px #818cf8 !important;
+  transform: translateY(-2px);
+}
+
+/* Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Toast Notification Animation */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.toast-animate {
+  animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Shimmer animation for loading states */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-effect::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmer 1.8s infinite;
+}
+
+/* Batch Photo Scroll Gallery Styles */
+.batch-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+}
+
+.batch-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.batch-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 9999px;
+}
+
+.batch-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+
+.batch-thumb-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(18, 20, 29, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.batch-thumb-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5);
+}
+
+.batch-thumb-active {
+  border-color: #6366f1 !important;
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.12) 0%, rgba(18, 20, 29, 0.9) 100%) !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.6), 0 8px 24px -2px rgba(99, 102, 241, 0.3) !important;
+}
+
+.batch-delete-btn {
+  opacity: 0.7;
+  transition: all 0.15s ease;
+}
+
+.batch-delete-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  background-color: #e11d48 !important;
+  color: #ffffff !important;
+}

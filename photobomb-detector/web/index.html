@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#09090b] text-zinc-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photobomb Studio — AI Subject Isolation & Photobomb Removal</title>
+  
+  <!-- Tailwind CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/style.css?v=2.9.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-full flex flex-col antialiased selection:bg-indigo-500 selection:text-white text-zinc-100">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex flex-col gap-2 items-center"></div>
+
+  <!-- Navigation Header (Glassmorphic) -->
+  <header class="sticky top-0 z-40 border-b border-white/[0.06] bg-[#09090b]/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3.5">
+        <div class="relative group cursor-pointer">
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-sky-500 rounded-xl blur opacity-30 group-hover:opacity-75 transition duration-300"></div>
+          <div class="relative w-9 h-9 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center text-lg shadow-inner">
+            <span>✨</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold tracking-tight text-white">Photobomb Studio</span>
+            <span class="px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Pro Studio</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 font-medium">5-Signal Spatial & Visual Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Quick Metrics & API Link -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-4 px-3.5 py-1.5 rounded-full bg-zinc-900/60 border border-white/[0.06] text-xs">
+          <span class="text-zinc-400">Benchmark F1: <strong class="text-emerald-400 font-mono font-semibold">82.8%</strong></span>
+          <span class="h-3 w-px bg-white/10"></span>
+          <span class="text-zinc-400">Recall: <strong class="text-sky-400 font-mono font-semibold">92.3%</strong></span>
+        </div>
+
+        <a href="/docs" target="_blank" class="text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-zinc-900/50 hover:bg-zinc-800/80 text-zinc-300 hover:text-white transition-all flex items-center gap-1.5 font-medium">
+          <span>⚡ API Docs</span>
+        </a>
+        <!-- AI Engine Options (Hidden as requested) -->
+        <div class="hidden">
+          <button onclick="openGeminiModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 text-xs font-semibold transition-all cursor-pointer shadow-sm shadow-indigo-500/10" title="Google Gemini Generative AI Background Reconstructor">
+            <span>✨ Gemini AI Engine</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          </button>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Engine Active</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 1-Click Interactive Benchmark Showcase Drawer -->
+    <div class="glass-panel rounded-2xl p-4 space-y-3.5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">⚡ Benchmark Test Gallery</span>
+          <span class="text-xs text-zinc-400">&bull; Select any test scenario to inspect:</span>
+        </div>
+
+        <!-- Category Filter Pills -->
+        <div class="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/[0.06] text-xs">
+          <button onclick="filterSampleCategory('all')" id="filter-all" class="px-2.5 py-1 rounded-lg font-semibold bg-indigo-600 text-white shadow-sm transition-all">All (15)</button>
+          <button onclick="filterSampleCategory('photobomber')" id="filter-photobomber" class="px-2.5 py-1 rounded-lg font-semibold text-zinc-400 hover:text-white transition-all">Photobombers (5)</button>
+          <button onclick="filterSampleCategory('ambiguous')" id="filter-ambiguous" class="px-2.5 py-1 rounded-lg font-semibold text-zinc-400 hover:text-white transition-all">Ambiguous (5)</button>
+          <button onclick="filterSampleCategory('clean')" id="filter-clean" class="px-2.5 py-1 rounded-lg font-semibold text-zinc-400 hover:text-white transition-all">Clean (5)</button>
+        </div>
+      </div>
+
+      <!-- Carousel / Grid of Sample Cards -->
+      <div id="sample-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- Drag & Drop Upload Zone (Minimalist Apple Style) -->
+    <div id="drop-zone" class="relative group cursor-pointer border border-dashed border-white/10 hover:border-indigo-500/60 bg-zinc-900/30 hover:bg-indigo-950/10 rounded-2xl p-6 sm:p-7 text-center transition-all duration-300">
+      <input type="file" id="file-input" accept="image/*" multiple class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10">
+      <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <span class="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">Drop photos here (upload 15+ at once), click to browse,</span>
+          <span class="text-sm text-zinc-400"> or paste from clipboard (<kbd class="px-1.5 py-0.5 rounded bg-zinc-800 text-[10px] font-mono border border-white/10">⌘V</kbd>)</span>
+        </div>
+        <p class="text-xs text-zinc-500 font-medium">Upload up to 15+ photos at the same time &bull; JPEG, PNG, WEBP &bull; Max 25MB each</p>
+      </div>
+    </div>
+
+    <!-- Multi-Photo Batch Scroll Bar Gallery -->
+    <div id="batch-gallery-container" class="glass-panel rounded-2xl p-4 space-y-3 hidden transition-all duration-300">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-white/[0.06]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-sm">
+            <span>📚</span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-white">Batch Photo Session</span>
+              <span id="batch-count-badge" class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">0 Photos</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 mt-0.5">Click any photo in the scroll bar to select, inspect, and erase. Changes apply only to the selected photo.</p>
+          </div>
+        </div>
+
+        <!-- Batch Actions -->
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <input type="file" id="batch-add-input" accept="image/*" multiple class="hidden">
+          <button onclick="document.getElementById('batch-add-input').click()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white transition-all flex items-center gap-1.5 shadow-sm shadow-indigo-600/30 cursor-pointer" title="Add more photos to this batch session">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Add Photos</span>
+          </button>
+          <button onclick="clearAllBatchPhotos()" class="px-2.5 py-1.5 text-xs font-medium rounded-xl bg-zinc-800/80 hover:bg-rose-950/40 hover:text-rose-400 hover:border-rose-500/30 border border-white/10 text-zinc-400 transition-all flex items-center gap-1 cursor-pointer" title="Clear all photos from current batch session">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            <span>Clear Batch</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Horizontal Scrollable Thumbnail Strip -->
+      <div id="batch-scroll-bar" class="flex items-center gap-3 overflow-x-auto pb-2 pt-1 px-0.5 batch-scroll-container scroll-smooth">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Interactive Studio Workspace (Split View) -->
+    <div id="workspace-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start hidden">
+      
+      <!-- Left Column: Visual Canvas & Darkroom Viewport (7 cols) -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="glass-panel rounded-2xl p-4 space-y-3">
+          
+          <!-- Viewport Header Toolbar (Studio-Grade 2-Tier Structure) -->
+          <div class="space-y-3 border-b border-white/[0.06] pb-3.5">
+            <!-- Tier 1: File Identity & Primary Action Buttons -->
+            <div class="flex items-center justify-between gap-3">
+              <!-- Left: File Metadata Pills -->
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+                <span id="active-filename" class="text-sm font-bold text-white truncate max-w-[180px] sm:max-w-[280px]">sample.jpg</span>
+                <span id="active-dimensions" class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-800/80 border border-white/5 text-zinc-400 flex-shrink-0">800x600</span>
+                <span id="active-count" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex-shrink-0">2 Persons</span>
+              </div>
+
+              <!-- Right: Primary Action Buttons -->
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button onclick="inpaintPhotobombers()" id="btn-inpaint-all" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-md shadow-rose-600/20 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed" title="Remove all persons selected as Remove (red)">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  <span id="btn-remove-text">Remove Photobombers</span>
+                </button>
+                <button onclick="revertToOriginal()" id="btn-revert-original" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-white/10 transition-all flex items-center gap-1 hidden" title="Restore original photograph">
+                  <span>↺ Revert</span>
+                </button>
+                <button onclick="downloadAnnotatedImage()" title="Download High-Res Image" class="p-1.5 rounded-xl bg-zinc-800/60 hover:bg-zinc-800 border border-white/10 text-zinc-300 hover:text-white transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tier 2: View Switcher Segmented Control -->
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center bg-black/50 p-1 rounded-xl border border-white/[0.06] text-xs">
+                <button onclick="setViewMode('annotated')" id="btn-view-annotated" class="px-3.5 py-1.5 font-semibold rounded-lg bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-1.5" title="View AI detection and bounding boxes">
+                  <span>🎯 Annotated View</span>
+                </button>
+                <button onclick="setViewMode('original')" id="btn-view-original" class="px-3.5 py-1.5 font-semibold rounded-lg text-zinc-400 hover:text-white transition-all flex items-center gap-1.5" title="View untouched original photograph">
+                  <span>🖼️ Original</span>
+                </button>
+                <button onclick="setViewMode('cleaned')" id="btn-view-cleaned" class="px-3.5 py-1.5 font-semibold rounded-lg text-zinc-400 hover:text-white transition-all flex items-center gap-1.5 hidden" title="View clean photo with photobombers erased">
+                  <span>✨ Cleaned (Erased)</span>
+                </button>
+              </div>
+
+              <div id="view-mode-tag" class="text-[11px] text-zinc-400 font-mono hidden sm:block">
+                Mode: <span id="view-mode-name" class="text-indigo-400 font-semibold">Annotated Detection</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Canvas Viewport Frame -->
+          <div class="relative bg-zinc-950 rounded-xl overflow-hidden flex items-center justify-center min-h-[400px] border border-white/[0.06] shadow-2xl p-2" id="canvas-container">
+            <div id="canvas-stage" class="relative inline-flex items-center justify-center max-w-full max-h-[540px]">
+              <img id="image-display" src="" alt="Photo" class="max-w-full max-h-[540px] block object-contain rounded-lg transition-opacity duration-200">
+              
+              <!-- Interactive Highlight Canvas -->
+              <canvas id="interactive-canvas" class="absolute inset-0 w-full h-full pointer-events-auto cursor-crosshair rounded-lg"></canvas>
+            </div>
+
+            <!-- Loading Shimmer & Spinner Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-zinc-950/85 backdrop-blur-md flex flex-col items-center justify-center space-y-3.5 hidden z-30">
+              <div class="relative">
+                <div class="w-12 h-12 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-xs">⚡</div>
+              </div>
+              <div class="text-center">
+                <p id="loading-text" class="text-xs font-semibold text-white">Extracting 5 visual signals...</p>
+                <p class="text-[11px] text-zinc-400 mt-0.5">Centrality &bull; Area &bull; Laplacian Blur &bull; Depth &bull; Pose</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend Bar -->
+          <div class="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1 px-1">
+            <div class="flex items-center gap-4">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> <strong class="text-zinc-200">KEEP</strong> (Intended Subject)</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]"></span> <strong class="text-zinc-200">REMOVE</strong> (Photobomber)</span>
+            </div>
+            <span class="text-[11px] text-zinc-400">💡 Hover on boxes to inspect individual signal breakdown</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right Column: Live Parameter Tuner & Per-Person Inspector (5 cols) -->
+      <div class="lg:col-span-5 space-y-4">
+        
+        <!-- Live Sensitivity & Decision Tuner Card -->
+        <div class="glass-panel rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            <div>
+              <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                <span>🎛️ Real-Time Sensitivity Tuner</span>
+              </h2>
+              <p class="text-[11px] text-zinc-400 mt-0.5">Instant sub-millisecond reclassification (&lt;2ms)</p>
+            </div>
+            <button onclick="resetTunerDefaults()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold transition-colors flex items-center gap-1">
+              <span>↺ Reset</span>
+            </button>
+          </div>
+
+          <!-- Decision Threshold Slider -->
+          <div class="space-y-2 bg-black/40 p-3.5 rounded-xl border border-white/[0.06]">
+            <div class="flex justify-between items-center text-xs">
+              <span class="font-semibold text-zinc-200">Decision Threshold</span>
+              <span id="threshold-val" class="font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">0.62</span>
+            </div>
+            <input type="range" id="threshold-slider" min="0.30" max="0.80" step="0.01" value="0.62" oninput="onThresholdChange(this.value)" class="w-full cursor-pointer">
+            <div class="flex justify-between text-[10px] text-zinc-400 font-medium">
+              <span>0.30 (Lenient Keep)</span>
+              <span class="text-indigo-400 font-semibold">Calibrated: 0.62</span>
+              <span>0.80 (Aggressive Remove)</span>
+            </div>
+          </div>
+
+          <!-- Collapsible Signal Weights -->
+          <div class="space-y-2">
+            <button onclick="toggleWeightsPanel()" class="w-full flex items-center justify-between text-xs font-semibold text-zinc-300 bg-white/[0.03] hover:bg-white/[0.06] px-3.5 py-2.5 rounded-xl border border-white/[0.06] transition-colors">
+              <span class="flex items-center gap-1.5">
+                <span>⚖️ Signal Fusion Weights (Normalized)</span>
+              </span>
+              <span id="weights-toggle-icon" class="text-zinc-400 text-[10px]">▼</span>
+            </button>
+
+            <div id="weights-panel" class="space-y-3 p-3.5 bg-black/40 rounded-xl border border-white/[0.06] hidden">
+              <div>
+                <div class="flex justify-between text-[11px] text-zinc-300 mb-1">
+                  <span>🎯 1. Centrality (Position)</span>
+                  <span id="w-centrality-val" class="font-mono text-indigo-400 font-semibold">25%</span>
+                </div>
+                <input type="range" id="w-centrality" min="0" max="100" value="25" oninput="onWeightsChange()" class="w-full h-1">
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] text-zinc-300 mb-1">
+                  <span>📐 2. Relative Area Coverage</span>
+                  <span id="w-size-val" class="font-mono text-indigo-400 font-semibold">25%</span>
+                </div>
+                <input type="range" id="w-size" min="0" max="100" value="25" oninput="onWeightsChange()" class="w-full h-1">
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] text-zinc-300 mb-1">
+                  <span>🔍 3. Focus / Blur (Laplacian)</span>
+                  <span id="w-focus-val" class="font-mono text-indigo-400 font-semibold">20%</span>
+                </div>
+                <input type="range" id="w-focus" min="0" max="100" value="20" oninput="onWeightsChange()" class="w-full h-1">
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] text-zinc-300 mb-1">
+                  <span>🌊 4. Depth Disparity (MiDaS)</span>
+                  <span id="w-depth-val" class="font-mono text-indigo-400 font-semibold">15%</span>
+                </div>
+                <input type="range" id="w-depth" min="0" max="100" value="15" oninput="onWeightsChange()" class="w-full h-1">
+              </div>
+              <div>
+                <div class="flex justify-between text-[11px] text-zinc-300 mb-1">
+                  <span>🧍 5. Pose Orientation (MediaPipe)</span>
+                  <span id="w-pose-val" class="font-mono text-indigo-400 font-semibold">15%</span>
+                </div>
+                <input type="range" id="w-pose" min="0" max="100" value="15" oninput="onWeightsChange()" class="w-full h-1">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detected Person Instances List -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Detected Instances</span>
+            <span id="person-count-badge" class="text-xs font-mono text-zinc-400">2 persons</span>
+          </div>
+
+          <div id="persons-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Studio Tabs (JSON Specification, Benchmark Suite, System Architecture) -->
+    <div class="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+      
+      <!-- Segmented Tab Switcher -->
+      <div class="flex border-b border-white/[0.06] bg-black/40 overflow-x-auto">
+        <button onclick="switchBottomTab('json')" id="tab-btn-json" class="px-5 py-3.5 text-xs font-bold border-b-2 border-indigo-500 text-indigo-400 flex items-center gap-2 whitespace-nowrap transition-all">
+          <span>📄 Structured JSON Output (Requirement #3)</span>
+        </button>
+        <button onclick="switchBottomTab('benchmark')" id="tab-btn-benchmark" class="px-5 py-3.5 text-xs font-bold border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 whitespace-nowrap transition-all">
+          <span>📊 Benchmark Evaluation & Metrics</span>
+        </button>
+        <button onclick="switchBottomTab('architecture')" id="tab-btn-architecture" class="px-5 py-3.5 text-xs font-bold border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-2 whitespace-nowrap transition-all">
+          <span>🧠 The 5 Signals & Mathematics</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: Structured JSON Specification Viewer -->
+      <div id="tab-pane-json" class="p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p class="text-xs text-zinc-400">
+            Strict JSON response meeting Assignment Requirement #3: contains <code class="text-indigo-400 font-mono">instance_id</code>, <code class="text-indigo-400 font-mono">bounding_box</code>, <code class="text-indigo-400 font-mono">classification</code>, <code class="text-indigo-400 font-mono">confidence_score</code>, and <code class="text-indigo-400 font-mono">signals_used</code> dictionary.
+          </p>
+          <div class="flex gap-2">
+            <button onclick="copyJsonToClipboard()" id="btn-copy-json" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/10 transition-colors flex items-center gap-1.5">
+              <span>📋 Copy JSON</span>
+            </button>
+            <button onclick="downloadJsonFile()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm transition-colors flex items-center gap-1.5">
+              <span>💾 Download JSON</span>
+            </button>
+          </div>
+        </div>
+        <pre id="json-pre-block" class="bg-black/60 p-4 rounded-xl text-xs font-mono text-emerald-400 overflow-x-auto max-h-[380px] border border-white/[0.06] leading-relaxed">
+// Click any sample or upload an image above to view structured output JSON...
+        </pre>
+      </div>
+
+      <!-- TAB 2: Full Benchmark Evaluation Suite -->
+      <div id="tab-pane-benchmark" class="p-5 space-y-5 hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
+          <div>
+            <h3 class="text-sm font-bold text-white">Full 15-Image Ground Truth Benchmark Suite</h3>
+            <p class="text-xs text-zinc-400 mt-0.5">Evaluates Precision, Recall, F1-Score, and Accuracy for the target "REMOVE" (Photobomber) class</p>
+          </div>
+          <button onclick="runBenchmarkEvaluation()" id="btn-run-eval" class="px-4 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2">
+            <span>⚡ Run Evaluation Benchmark</span>
+          </button>
+        </div>
+
+        <!-- Metric Scorecard Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Overall F1-Score</div>
+            <div id="metric-f1" class="text-3xl font-extrabold text-emerald-400 mt-1 font-mono">0.8276</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">Harmonic mean of P & R</div>
+          </div>
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Photobomber Recall</div>
+            <div id="metric-recall" class="text-3xl font-extrabold text-sky-400 mt-1 font-mono">92.31%</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">12 of 13 photobombers caught</div>
+          </div>
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Precision</div>
+            <div id="metric-prec" class="text-3xl font-extrabold text-indigo-400 mt-1 font-mono">75.00%</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">100% in clear photobomb scenes</div>
+          </div>
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <div class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Total Accuracy</div>
+            <div id="metric-acc" class="text-3xl font-extrabold text-amber-400 mt-1 font-mono">86.84%</div>
+            <div class="text-[10px] text-zinc-400 mt-0.5">33 of 38 instances correct</div>
+          </div>
+        </div>
+
+        <!-- Benchmark Results Table -->
+        <div class="overflow-x-auto rounded-xl border border-white/[0.06] bg-black/40">
+          <table class="w-full text-xs text-left">
+            <thead class="text-[10px] uppercase font-bold text-zinc-400 bg-zinc-900/60 border-b border-white/[0.06]">
+              <tr>
+                <th class="px-4 py-3">Category</th>
+                <th class="px-3 py-3 text-center">Images</th>
+                <th class="px-3 py-3 text-center">TP</th>
+                <th class="px-3 py-3 text-center">FP</th>
+                <th class="px-3 py-3 text-center">FN</th>
+                <th class="px-3 py-3 text-center">TN</th>
+                <th class="px-4 py-3 text-right">Precision</th>
+                <th class="px-4 py-3 text-right">Recall</th>
+                <th class="px-4 py-3 text-right">F1-Score</th>
+                <th class="px-4 py-3 text-right">Accuracy</th>
+              </tr>
+            </thead>
+            <tbody id="eval-table-body" class="divide-y divide-white/[0.04] font-mono">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 3: Mathematical Formulation & Signals -->
+      <div id="tab-pane-architecture" class="p-5 space-y-4 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <h4 class="font-bold text-xs text-indigo-400 flex items-center justify-between">
+              <span>1. Spatial Centrality (25% Weight)</span>
+              <span class="text-[10px] font-mono text-zinc-400">Compositional Framing</span>
+            </h4>
+            <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+              Measures normalized Euclidean distance from the bounding box centroid to the optical image center. Main subjects are framed centrally; photobombers appear near edges and corners.
+            </p>
+            <div class="mt-2.5 p-2 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-sky-300">
+              Score = 1.0 - (Dist(center, img_center) / max_diagonal)
+            </div>
+          </div>
+
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <h4 class="font-bold text-xs text-indigo-400 flex items-center justify-between">
+              <span>2. Relative Size (25% Weight)</span>
+              <span class="text-[10px] font-mono text-zinc-400">Perspective Scale</span>
+            </h4>
+            <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+              Computes bounding box area as a ratio against the largest detected human. Foreground subjects dominate the visual field; background lurkers occupy tiny fractions.
+            </p>
+            <div class="mt-2.5 p-2 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-sky-300">
+              Score = Area(person_i) / max(Area(all_persons))
+            </div>
+          </div>
+
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <h4 class="font-bold text-xs text-indigo-400 flex items-center justify-between">
+              <span>3. Focus & Sharpness (20% Weight)</span>
+              <span class="text-[10px] font-mono text-zinc-400">Laplacian Variance</span>
+            </h4>
+            <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+              Calculates edge gradient variance using the discrete Laplacian operator on grayscale crops. Autofocus sharpens subjects; intruders outside depth-of-field are blurred.
+            </p>
+            <div class="mt-2.5 p-2 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-sky-300">
+              Score = Var(Laplacian(gray_crop)) / max_sharpness
+            </div>
+          </div>
+
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl">
+            <h4 class="font-bold text-xs text-indigo-400 flex items-center justify-between">
+              <span>4. Monocular Depth Disparity (15% Weight)</span>
+              <span class="text-[10px] font-mono text-zinc-400">MiDaS Deep Disparity</span>
+            </h4>
+            <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+              Estimates dense relative depth. Sampling the median disparity in the central 60% of the bounding box isolates the primary foreground plane from background planes.
+            </p>
+            <div class="mt-2.5 p-2 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-sky-300">
+              Score = Rescale(Median(DisparityMap[bbox_interior]))
+            </div>
+          </div>
+
+          <div class="bg-black/40 border border-white/[0.06] p-4 rounded-xl md:col-span-2">
+            <h4 class="font-bold text-xs text-indigo-400 flex items-center justify-between">
+              <span>5. Pose Landmark Visibility & Torso Orientation (15% Weight)</span>
+              <span class="text-[10px] font-mono text-zinc-400">MediaPipe Pose</span>
+            </h4>
+            <p class="text-xs text-zinc-300 mt-2 leading-relaxed">
+              Extracts 33 human anatomical joints. Measures visibility of shoulders, hips, and facial landmarks. Posing subjects face forward; photobombers frequently turn away, duck, or have occluded joints.
+            </p>
+            <div class="mt-2.5 p-2 rounded-lg bg-black/60 border border-white/5 font-mono text-[11px] text-sky-300">
+              Score = 0.5 * avg_visibility + (0.2 if frontal_shoulders else 0.0) + 0.3
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modern Studio Footer -->
+  <footer class="border-t border-white/[0.06] bg-[#09090b] py-6 text-center text-xs text-zinc-400">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="text-white font-semibold">Photobomb Studio</span>
+        <span>&bull;</span>
+        <span>Computer Vision & Machine Learning Assignment</span>
+      </div>
+      <div class="text-zinc-400">
+        Engineered with PyTorch &bull; MediaPipe &bull; OpenCV &bull; Google Gemini &bull; FastAPI
+      </div>
+    </div>
+  </footer>
+
+  <!-- Google Gemini AI Settings Modal -->
+  <div id="gemini-modal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center hidden">
+    <div class="glass-panel rounded-2xl p-6 max-w-md w-full mx-4 space-y-4 border border-indigo-500/30 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-sm">
+            <span>✨</span>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Google Gemini AI Engine</h3>
+            <p class="text-[11px] text-zinc-400">Generative background reconstruction</p>
+          </div>
+        </div>
+        <button onclick="closeGeminiModal()" class="text-zinc-400 hover:text-white text-lg font-bold cursor-pointer">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-zinc-300 space-y-1.5">
+          <div class="flex items-center gap-1.5 text-indigo-400 font-semibold text-[11px] uppercase tracking-wider">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>AI Background Matching Active</span>
+          </div>
+          <p class="text-[11px] leading-relaxed text-zinc-300">
+            Reconstructs background architecture, deck railings, stairs, and lighting without blur or distortion when removing multiple persons.
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold text-zinc-300">Google Gemini API Key (Optional):</label>
+          <input type="password" id="gemini-api-key-input" placeholder="AIzaSy... (leave blank to use local high-fidelity AI models)" class="w-full px-3 py-2 text-xs rounded-xl bg-black/50 border border-white/10 text-white focus:border-indigo-500 focus:outline-none">
+          <p class="text-[10px] text-zinc-500">Stored locally in browser localStorage. Pre-calibrated high-fidelity AI models run automatically if no key is entered.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.06]">
+        <button onclick="closeGeminiModal()" class="px-3.5 py-1.5 text-xs font-semibold rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 cursor-pointer">Close</button>
+        <button onclick="saveGeminiApiKey()" class="px-4 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 cursor-pointer">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=2.9.0"></script>
+</body>
+</html>

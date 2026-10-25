@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  cifar10-classifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cifar10-numpy-production
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - WORKERS=2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G

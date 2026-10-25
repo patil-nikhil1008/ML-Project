@@ -1,0 +1,246 @@
+{
+  "images": [
+    {
+      "filename": "photobomber/pb_01.jpg",
+      "category": "photobomber",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "remove"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        },
+        {
+          "instance_id": 2,
+          "label": "keep"
+        },
+        {
+          "instance_id": 3,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "photobomber/pb_02.jpg",
+      "category": "photobomber",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "photobomber/pb_03.jpg",
+      "category": "photobomber",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "remove"
+        },
+        {
+          "instance_id": 1,
+          "label": "keep"
+        },
+        {
+          "instance_id": 2,
+          "label": "remove"
+        },
+        {
+          "instance_id": 3,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "photobomber/pb_04.jpg",
+      "category": "photobomber",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "photobomber/pb_05.jpg",
+      "category": "photobomber",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "ambiguous/amb_01.jpg",
+      "category": "ambiguous",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "keep"
+        },
+        {
+          "instance_id": 2,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "ambiguous/amb_02.jpg",
+      "category": "ambiguous",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "keep"
+        },
+        {
+          "instance_id": 2,
+          "label": "remove"
+        },
+        {
+          "instance_id": 3,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "ambiguous/amb_03.jpg",
+      "category": "ambiguous",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "keep"
+        },
+        {
+          "instance_id": 2,
+          "label": "keep"
+        },
+        {
+          "instance_id": 3,
+          "label": "keep"
+        },
+        {
+          "instance_id": 4,
+          "label": "remove"
+        }
+      ]
+    },
+    {
+      "filename": "ambiguous/amb_04.jpg",
+      "category": "ambiguous",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        },
+        {
+          "instance_id": 2,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "ambiguous/amb_05.jpg",
+      "category": "ambiguous",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "remove"
+        },
+        {
+          "instance_id": 2,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "clean/clean_01.jpg",
+      "category": "clean",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "clean/clean_02.jpg",
+      "category": "clean",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "clean/clean_03.jpg",
+      "category": "clean",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "clean/clean_04.jpg",
+      "category": "clean",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        }
+      ]
+    },
+    {
+      "filename": "clean/clean_05.jpg",
+      "category": "clean",
+      "annotations": [
+        {
+          "instance_id": 0,
+          "label": "keep"
+        },
+        {
+          "instance_id": 1,
+          "label": "keep"
+        }
+      ]
+    }
+  ]
+}

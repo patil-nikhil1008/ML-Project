@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+venv/
+.venv/
+env/
+
+# Datasets and Large Archives
+Q2_Image_Classification/data/
+*.tar.gz
+*.zip
+*.tar
+
+# OS & Editor files
+.DS_Store
+*/.DS_Store
+Thumbs.db
+.idea/
+.vscode/
