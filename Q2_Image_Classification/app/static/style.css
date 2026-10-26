@@ -106,6 +106,8 @@ h1 {
 .badge-accent { background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3); }
 .badge-link { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); text-decoration: none; border: 1px solid var(--border-color); transition: all 0.2s; }
 .badge-link:hover { background: rgba(255, 255, 255, 0.16); }
+.badge-pdf { background: rgba(239, 68, 68, 0.15); color: #f87171; text-decoration: none; border: 1px solid rgba(239, 68, 68, 0.35); transition: all 0.2s; }
+.badge-pdf:hover { background: rgba(239, 68, 68, 0.3); color: #ffffff; }
 
 .dot {
   width: 8px;
